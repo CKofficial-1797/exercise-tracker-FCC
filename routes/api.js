@@ -2,65 +2,94 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 
-// POST /api/users
+
 router.post("/users", async (req, res) => {
-  const user = new User({ username: req.body.username });
-  const savedUser = await user.save();
-  res.json({ username: savedUser.username, _id: savedUser._id });
+  try {
+    const user = new User({ username: req.body.username });
+    const savedUser = await user.save();
+    res.json({ username: savedUser.username, _id: savedUser._id });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create user" });
+  }
 });
 
-// GET /api/users
+
 router.get("/users", async (req, res) => {
-  const users = await User.find({}, "username _id");
-  res.json(users);
+  try {
+    const users = await User.find({}, "username _id");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
 });
 
-// POST /api/users/:_id/exercises
 router.post("/users/:_id/exercises", async (req, res) => {
-  const { description, duration, date } = req.body;
-  const user = await User.findById(req.params._id);
+  try {
+    const { description, duration, date } = req.body;
+    const user = await User.findById(req.params._id);
 
-  const exercise = {
-    description,
-    duration: parseInt(duration),
-    date: date ? new Date(date) : new Date(),
-  };
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-  user.log.push(exercise);
-  await user.save();
+    const exercise = {
+      description,
+      duration: parseInt(duration),
+      date: date ? new Date(date) : new Date(),
+    };
 
-  res.json({
-    username: user.username,
-    description: exercise.description,
-    duration: exercise.duration,
-    date: exercise.date.toDateString(),
-    _id: user._id,
-  });
+    user.log.push(exercise);
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      description: exercise.description,
+      duration: exercise.duration,
+      date: exercise.date.toDateString(),
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add exercise" });
+  }
 });
 
-// GET /api/users/:_id/logs
+// GET /api/users/:_id/logs?from=..&to=..&limit=..
 router.get("/users/:_id/logs", async (req, res) => {
-  const { from, to, limit } = req.query;
-  const user = await User.findById(req.params._id);
+  try {
+    const { from, to, limit } = req.query;
+    const user = await User.findById(req.params._id);
 
-  let log = user.log;
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-  if (from) log = log.filter((e) => new Date(e.date) >= new Date(from));
-  if (to) log = log.filter((e) => new Date(e.date) <= new Date(to));
-  if (limit) log = log.slice(0, parseInt(limit));
+    let log = user.log;
 
-  const formattedLog = log.map((e) => ({
-    description: e.description,
-    duration: e.duration,
-    date: new Date(e.date).toDateString(),
-  }));
+    if (from) {
+      const fromDate = new Date(from);
+      log = log.filter(e => new Date(e.date) >= fromDate);
+    }
 
-  res.json({
-    username: user.username,
-    count: formattedLog.length,
-    _id: user._id,
-    log: formattedLog,
-  });
+    if (to) {
+      const toDate = new Date(to);
+      log = log.filter(e => new Date(e.date) <= toDate);
+    }
+
+    if (limit) {
+      log = log.slice(0, parseInt(limit));
+    }
+
+    const formattedLog = log.map(e => ({
+      description: e.description,
+      duration: e.duration,
+      date: new Date(e.date).toDateString(),
+    }));
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      count: formattedLog.length,
+      log: formattedLog,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get logs" });
+  }
 });
 
 module.exports = router;
