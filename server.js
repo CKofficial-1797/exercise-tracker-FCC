@@ -1,37 +1,30 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
-require("dotenv").config();
-
-const apiRoutes = require("./routes/api");
-
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 const app = express();
-const PORT = process.env.PORT || 3000;
+require('dotenv').config();
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+const User = require('./models/user');
 
-// Middleware
-app.use(cors());
-app.use(express.static("public")); // Optional: serve static files
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-
-// Routes
-app.use("/api", apiRoutes);
-
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/views/index.html");
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 });
 
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+// GET all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username _id'); // Only return username and _id
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+const listener = app.listen(process.env.PORT || 3000, () => {
+  console.log('Your app is listening on port ' + listener.address().port);
 });
