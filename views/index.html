@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Exercise Tracker</title>
+</head>
+<body>
+  <h1>🏋️‍♂️ Exercise Tracker</h1>
+
+  <!-- Create User -->
+  <section>
+    <h2>Create User</h2>
+    <form id="createUserForm">
+      <input type="text" id="username" placeholder="Enter username" required />
+      <button type="submit">Create</button>
+    </form>
+    <pre id="createUserResult"></pre>
+  </section>
+
+  <!-- Get All Users -->
+  <section>
+    <h2>All Users</h2>
+    <button id="getUsersBtn">Fetch Users</button>
+    <pre id="usersList"></pre>
+  </section>
+
+  <!-- Add Exercise -->
+  <section>
+    <h2>Add Exercise</h2>
+    <form id="addExerciseForm">
+      <input type="text" id="userId" placeholder="User ID" required /><br />
+      <input type="text" id="description" placeholder="Description" required /><br />
+      <input type="number" id="duration" placeholder="Duration (min)" required /><br />
+      <input type="date" id="date" /><br />
+      <button type="submit">Add Exercise</button>
+    </form>
+    <pre id="addExerciseResult"></pre>
+  </section>
+
+  <!-- Get Logs -->
+  <section>
+    <h2>Get Exercise Log</h2>
+    <form id="getLogForm">
+      <input type="text" id="logUserId" placeholder="User ID" required /><br />
+      <input type="date" id="fromDate" />
+      <input type="date" id="toDate" />
+      <input type="number" id="limit" placeholder="Limit" />
+      <button type="submit">Get Logs</button>
+    </form>
+    <pre id="logResult"></pre>
+  </section>
+
+  <script>
+    const API_BASE = '/api/users';
+
+    // Create User
+    document.getElementById("createUserForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const username = document.getElementById("username").value;
+      const res = await fetch(API_BASE, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      document.getElementById("createUserResult").textContent = JSON.stringify(data, null, 2);
+    });
+
+    // Get All Users
+    document.getElementById("getUsersBtn").addEventListener("click", async () => {
+      const res = await fetch(API_BASE);
+      const data = await res.json();
+      document.getElementById("usersList").textContent = JSON.stringify(data, null, 2);
+    });
+
+    // Add Exercise
+    document.getElementById("addExerciseForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const id = document.getElementById("userId").value;
+      const body = {
+        description: document.getElementById("description").value,
+        duration: document.getElementById("duration").value,
+        date: document.getElementById("date").value
+      };
+      const res = await fetch(`${API_BASE}/${id}/exercises`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      document.getElementById("addExerciseResult").textContent = JSON.stringify(data, null, 2);
+    });
+
+    // Get Logs
+    document.getElementById("getLogForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const id = document.getElementById("logUserId").value;
+      const from = document.getElementById("fromDate").value;
+      const to = document.getElementById("toDate").value;
+      const limit = document.getElementById("limit").value;
+
+      let url = `${API_BASE}/${id}/logs?`;
+      if (from) url += `from=${from}&`;
+      if (to) url += `to=${to}&`;
+      if (limit) url += `limit=${limit}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      document.getElementById("logResult").textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>
