@@ -9,20 +9,26 @@ router.post("/users", async (req, res) => {
   res.json({ username: savedUser.username, _id: savedUser._id });
 });
 
-// GET /api/users
 router.get("/users", async (req, res) => {
   try {
-    const users = await User.find({}).select('username _id').lean();
-    res.json(
-      users.map(user => ({
-        username: user.username,
-        _id: user._id.toString() // ensures _id is a string
-      }))
-    );
+    const users = await User.find({
+      username: { $exists: true, $ne: null }
+    }).select("username _id").lean();
+
+    const filteredUsers = users.filter(u => u.username && u._id); // extra safety
+    const result = filteredUsers.map(u => ({
+      username: u.username,
+      _id: u._id.toString()
+    }));
+
+    res.json(result);
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
+
 
 
 
