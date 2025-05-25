@@ -11,9 +11,19 @@ router.post("/users", async (req, res) => {
 
 // GET /api/users
 router.get("/users", async (req, res) => {
-  const users = await User.find({}, "username _id").lean(); // <-- use .lean()
-  res.json(users);
+  try {
+    const users = await User.find({}).select('username _id').lean();
+    res.json(
+      users.map(user => ({
+        username: user.username,
+        _id: user._id.toString() // ensures _id is a string
+      }))
+    );
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 });
+
 
 
 // POST /api/users/:_id/exercises
