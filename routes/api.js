@@ -11,13 +11,10 @@ router.post("/users", async (req, res) => {
 
 // GET /api/users
 router.get("/users", async (req, res) => {
-  const users = await User.find({}, "username _id");
-  const formattedUsers = users.map(user => ({
-    username: user.username,
-    _id: user._id
-  }));
-  res.json(formattedUsers);
+  const users = await User.find({}, "username _id").lean(); // <-- use .lean()
+  res.json(users);
 });
+
 
 // POST /api/users/:_id/exercises
 router.post("/users/:_id/exercises", async (req, res) => {
