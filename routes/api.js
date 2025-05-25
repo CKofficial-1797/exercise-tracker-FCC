@@ -12,7 +12,11 @@ router.post("/users", async (req, res) => {
 // GET /api/users
 router.get("/users", async (req, res) => {
   const users = await User.find({}, "username _id");
-  res.json(users);
+  const formattedUsers = users.map(user => ({
+    username: user.username,
+    _id: user._id
+  }));
+  res.json(formattedUsers);
 });
 
 // POST /api/users/:_id/exercises
